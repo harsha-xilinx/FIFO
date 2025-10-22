@@ -2,7 +2,7 @@
 */
 
 module #(parameter WIDTH=32, ADDR=4) sync_fifo(
-  input clk, rst,
+  input clk, rst,clr,
   
   input wr_en, 
   input [WIDTH-1:0] wdata,
@@ -38,6 +38,13 @@ module #(parameter WIDTH=32, ADDR=4) sync_fifo(
         fifo_full<=1'b0;
         rd_ptr<=1'b0;
         wr_ptr<=1'b0;
+      end
+    else if (clr) 
+      begin
+        wr_ptr     <= '0;
+        rd_ptr     <= '0;
+        fifo_empty <= 1'b1;
+        fifo_full  <= 1'b0;
       end
     else
       begin
