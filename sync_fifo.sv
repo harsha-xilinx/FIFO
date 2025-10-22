@@ -14,7 +14,7 @@ module #(parameter WIDTH=32, ADDR=4) sync_fifo(
   output reg fifo_empty, fifo_full
 );
   //DEPTH OF FIFO
-  localparam DEPTH = 2**ADDR ;
+  localparam DEPTH = 1<<ADDR ;
   reg [WIDTH-1:0] mem [0:DEPTH-1];
 
   // Address pointer
@@ -53,14 +53,14 @@ module #(parameter WIDTH=32, ADDR=4) sync_fifo(
         rdata <= 0;
       else
         begin
-          if (wr_en==1 && rd_en==1)
+          if (wr_en && rd_en && ~fifo_full && ~fifo_empty)
             begin
               mem[wr_ptr[ADDR-1:0]] <= wdata;
               rdata <= mem[rd_ptr[ADDR-1:0]];
             end
-          else if (wr_en)
+          else if (wr_en & ~fifo_full)
             mem[wr_ptr[ADDR-1:0]] <= wdata;
-          else if (rd_en)
+          else if (rd_en & ~fifo_empty)
               rdata <= mem[rd_ptr[ADDR-1:0]];
         end
     end //always
