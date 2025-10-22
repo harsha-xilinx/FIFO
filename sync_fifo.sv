@@ -1,100 +1,68 @@
-// sync_fifo.sv
-// Simple, synthesizable synchronous FIFO (single clock).
-// - Registered read (rd_data valid one cycle after successful read)
-// - Power-of-two depth (DEPTH = 2**ADDR)
-// - Full/empty via extra wrap bit on pointers.
+/*Verilog code for FIFO
+*/
 
-module sync_fifo #(
-  parameter int WIDTH = 32,
-  parameter int ADDR  = 4   // DEPTH = 2**ADDR
-) (
-  input  logic                 clk,
-  input  logic                 rst_n,
+module #(parameter WIDTH=32, ADDR=4) sync_fifo(
+  input clk, rst,
+  
+  input wr_en, 
+  input [WIDTH-1:0] wdata,
+  
+  input rd_en,
+  output reg [WIDTH-1:0] rdata,
 
-  // Write side
-  input  logic                 wr_en,      // enqueue request
-  input  logic [WIDTH-1:0]     wr_data,
-  output logic                 full,
-
-  // Read side
-  input  logic                 rd_en,      // dequeue request
-  output logic [WIDTH-1:0]     rd_data,
-  output logic                 rd_valid,   // asserted for 1 cycle when rd_data updates
-  output logic                 empty
+  //status flags
+  output reg fifo_empty, fifo_full
 );
+  //DEPTH OF FIFO
+  localparam DEPTH = 2**ADDR ;
+  reg [WIDTH-1:0] mem [0:DEPTH-1];
 
-  localparam int DEPTH = (1 << ADDR);
+  // Address pointer
+  reg [ADDR:0] wr_ptr, rd_ptr;
+  wire [ADDR:0] wr_ptr_nxt, rd_ptr_nxt;
 
-  // Memory
-  logic [WIDTH-1:0] mem [DEPTH];
+  wire   fifo_empty_nxt, fifo_full_nxt;
+  assign wr_ptr_nxt = wr_en  & ~fifo_full ? wr_ptr + 1'b1 : wr_ptr ;
+  assign rd_ptr_nxt = rd_en  & ~fifo_empty ? rd_ptr + 1'b1 : rd_ptr ;
 
-  // Pointers use one extra bit (wrap bit) to distinguish full vs empty
-  typedef logic [ADDR:0] ptr_t; // ADDR+1 bits
-  ptr_t wptr, rptr;
-  ptr_t wptr_next, rptr_next;
+//Logic for FIFO Full and FIFO Empty
+    assign fifo_full_nxt =  (wr_ptr_nxt[ADDR-1:0] == rd_ptr_nxt[ADDR-1:0]) && (wr_ptr_nxt[ADDR] != rd_ptr_nxt[ADDR]);
+    assign fifo_empty_nxt = (wr_ptr_nxt == rd_ptr_nxt);
 
-  // Convenience: address fields (index) and wrap bits
-  wire [ADDR-1:0] waddr = wptr[ADDR-1:0];
-  wire [ADDR-1:0] raddr = rptr[ADDR-1:0];
-
-  // Predict next pointers (only advance on successful op)
-  wire do_write = wr_en && !full;
-  wire do_read  = rd_en && !empty;
-
-  assign wptr_next = wptr + ptr_t'(do_write);
-  assign rptr_next = rptr + ptr_t'(do_read);
-
-  // Full/Empty logic
-  // Empty when pointers equal
-  // Full when next write pointer catches read pointer with inverted MSB
-  wire full_next  = ( (wptr_next[ADDR]     != rptr[ADDR]) &&
-                      (wptr_next[ADDR-1:0] == rptr[ADDR-1:0]) );
-  wire empty_next = (wptr_next == rptr_next) ? 1'b1 :
-                    (do_write && !do_read)   ? 1'b0 :
-                    (do_read  && !do_write)  ? ( (wptr == rptr_next) ) :
-                                               (wptr == rptr);
-
-  // Registered read data & valid
-  logic [WIDTH-1:0] rd_data_r;
-  logic             rd_valid_r;
-
-  // WRITE: occurs when do_write
-  always_ff @(posedge clk) begin
-    if (do_write) begin
-      mem[waddr] <= wr_data;
-    end
-  end
-
-  // READ: registered output; capture at read address when do_read
-  always_ff @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-      rd_data_r  <= '0;
-      rd_valid_r <= 1'b0;
-    end else begin
-      rd_valid_r <= do_read;
-      if (do_read) begin
-        rd_data_r <= mem[raddr];
+    
+// Reset and withoyt RESET logic
+  always@ (posedge clk, negedge rst)
+    if (~rst)
+      begin
+        fifo_empty<=1'b1;
+        fifo_full<=1'b0;
+        rd_ptr<=1'b0;
+        wr_ptr<=1'b0;
       end
-    end
-  end
+    else
+      begin
+        fifo_empty <= fifo_empty_nxt;
+        fifo_full <= fifo_full_nxt;
+        rd_ptr <= rd_ptr_nxt;
+        wr_ptr <= wr_ptr_nxt;
+      end
 
-  assign rd_data  = rd_data_r;
-  assign rd_valid = rd_valid_r;
-
-  // POINTER & FLAG REGISTERS
-  always_ff @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-      wptr  <= '0;
-      rptr  <= '0;
-      full  <= 1'b0;
-      empty <= 1'b1;
-    end else begin
-      wptr  <= wptr_next;
-      rptr  <= rptr_next;
-      full  <= full_next;
-      // robust empty update
-      empty <= (wptr_next == rptr_next);
-    end
-  end
+  always@ (posedge clk, negedge rst)
+    begin //always
+      if (~rst)
+        rdata <= 0;
+      else
+        begin
+          if (wr_en==1 && rd_en==1)
+            begin
+              mem[wr_ptr[ADDR-1:0]] <= wdata;
+              rdata <= mem[rd_ptr[ADDR-1:0]];
+            end
+          else if (wr_en)
+            mem[wr_ptr[ADDR-1:0]] <= wdata;
+          else if (rd_en)
+              rdata <= mem[rd_ptr[ADDR-1:0]];
+        end
+    end //always
 
 endmodule
