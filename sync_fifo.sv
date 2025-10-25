@@ -1,7 +1,7 @@
 /*Verilog code for FIFO
 */
 
-module #(parameter WIDTH=32, ADDR=4) sync_fifo(
+module sync_fifo #(parameter WIDTH=32, ADDR=4) (
   input clk, rst,clr,
   
   input wr_en, 
