@@ -30,6 +30,17 @@ Since these two clocks are independent, directly sampling a multi-bit binary poi
 To avoid this, we use Gray code pointers, where only one bit changes between consecutive values.
 When the Gray code pointer is synchronized across the clock domain using two flip-flops, even if one bit becomes metastable, it will either resolve to the previous or next valid Gray value — never an invalid one.
 This ensures the FIFO’s full and empty flags may be delayed (pessimistic), but they are always correct.
+
+Key takeaway (interview-ready explanation)
+
+In an asynchronous FIFO, the write and read pointers belong to different clock domains.
+
+To generate correct full and empty flags, each domain must know the other’s pointer.
+But directly sampling a multi-bit signal from another clock domain can cause metastability.
+
+Therefore, we Gray-code the pointers (only one bit changes per increment) and synchronize them into the opposite clock domain using a two-flip-flop synchronizer.
+
+This ensures that even if one bit becomes metastable, it will settle to either the old or new valid Gray value, guaranteeing safe, glitch-free flag generation.
+
 //////////////////////////////////////////////// end ////////////////////////////////////////////////////////////////
 
-**
