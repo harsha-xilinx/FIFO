@@ -1,0 +1,18 @@
+https://www.vlsiuniverse.com/sta-solved-problems-vlsi-interview-2021/
+
+15. 15. How does the clock skew and clock jitter affect the setup conditions and hold conditions? 
+In the presence of clock skew and clock jitter, the RAT and AT for setup and hold conditions will change.  
+For Setup condition: 
+Arrival time = tcq + tcomb 
+Required Arrival time = Tclk + tskew - tsu – 2tjitter 
+For Hold condition: 
+Arrival time = Tclk + tcq + tcomb 
+Required Arrival time = Tclk + tskew + thold + 2tjitter 
+
+
+
+
+16. what happen if setup slack or hold slack is zero, would it still be a violation or not ?
+“If setup or hold slack is zero, it’s not considered a violation, because timing just meets the required limits.
+But in practice, a design with 0 slack has no margin, so any small variation could cause a failure.
+That’s why engineers aim for positive slack to ensure robust timing closure.”
