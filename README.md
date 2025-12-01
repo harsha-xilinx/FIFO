@@ -35,4 +35,24 @@ Not in this simple synchronous design.
 For width conversion (e.g., 64-bit writes, 32-bit reads), you need a dual-port RAM or width-adapting FIFO.
 
 
+5. FULL/EMPTY Using Pointer MSB Toggle
+
+To utilize all entries:
+
+Pointers become wider
+wptr = {wrap_bit, addr_bits}
+rptr = {wrap_bit, addr_bits}
+
+Empty condition:
+empty = (wptr == rptr)
+
+Full condition:
+
+Full when:
+->address bits equal
+->wrap bits differ
+
+full = (wptr[MSB] != rptr[MSB]) &&
+       (wptr[ADDR_BITS-1:0] == rptr[ADDR_BITS-1:0]);
+This is industry-standard for FPGAs and ASICs.
 
