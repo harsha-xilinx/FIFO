@@ -127,3 +127,58 @@ module dual_port_ram_asyncclk #(
 
 endmodule
 
+2️⃣ Types of Dual-Port RAM
+A) Simple Dual-Port RAM
+
+One port supports Read/Write
+
+Other port supports Read-only
+
+Used in FIFOs typically (write side + read side)
+
+B) True Dual-Port RAM (TDP)
+
+Both ports can Read or Write
+
+Completely symmetric
+
+More flexible, more area
+
+Ports contain:
+
+addr_X
+
+din_X
+
+dout_X
+
+we_X
+
+Where X = A, B.
+
+8️⃣ How Dual-Port RAM is Implemented in Hardware?
+FPGA implementation
+
+Mapped to Block RAMs (BRAM)
+
+BRAMs have:
+
+two independent read/write ports
+
+byte-enable support
+
+configurable read-during-write mode
+
+independent clocks
+
+ASIC implementation
+
+Implemented using SRAM compilers
+
+Compilers generate:
+
+.lib (timing)
+
+.lef (layout)
+
+.v (functional model)
