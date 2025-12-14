@@ -35,8 +35,17 @@ Not in this simple synchronous design.
 For width conversion (e.g., 64-bit writes, 32-bit reads), you need a dual-port RAM or width-adapting FIFO.
 
 
-5. FULL/EMPTY Using Pointer MSB Toggle
+** FIFO depth not power of 2 :
+Answer:
+Problems:
+Pointer wrap logic fails
+Full detection breaks
+Solutions:
+Use counter-based FIFO
+Restrict depth to power of 2
+Use explicit boundary checks
 
+5. FULL/EMPTY Using Pointer MSB Toggle
 To utilize all entries:
 
 Pointers become wider
